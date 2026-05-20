@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RoadSense — System Architecture & Deployment</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --ink2: #2d2d44;
+    --body: #f8f7f4;
+    --surface: #ffffff;
+    --border: #e2ddd8;
+    --accent: #c84b31;
+    --accent2: #2563eb;
+    --green: #166534;
+    --green-bg: #dcfce7;
+    --blue-bg: #dbeafe;
+    --red-bg: #fee2e2;
+    --yellow-bg: #fef9c3;
+    --purple-bg: #f3e8ff;
+    --muted: #6b7280;
+    --mono: 'JetBrains Mono', monospace;
+    --serif: 'Playfair Display', serif;
+    --sans: 'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--body);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* COVER PAGE */
+  .cover {
+    background: var(--ink);
+    color: white;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px;
+    position: relative;
+    overflow: hidden;
+    page-break-after: always;
+  }
+
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(200,75,49,0.15), transparent 70%);
+  }
+
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -100px; left: -100px;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(37,99,235,0.1), transparent 70%);
+  }
+
+  .cover-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+  }
+
+  .cover h1 {
+    font-family: var(--serif);
+    font-size: 72px;
+    line-height: 1.05;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cover h1 span { color: var(--accent); }
+
+  .cover-subtitle {
+    font-size: 20px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cover-meta {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    max-width: 600px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cover-meta-item .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 4px;
+  }
+
+  .cover-meta-item .value {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.9);
+  }
+
+  .cover-rule {
+    width: 60px;
+    height: 3px;
+    background: var(--accent);
+    margin-bottom: 40px;
+  }
+
+  /* LAYOUT */
+  .page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 60px 40px;
+  }
+
+  /* CHAPTER HEADERS */
+  .chapter {
+    margin-top: 80px;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--ink);
+  }
+
+  .chapter-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .chapter h2 {
+    font-family: var(--serif);
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+
+  /* SECTION */
+  .section {
+    margin-bottom: 48px;
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 12px;
+    margin-top: 32px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  h3::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 18px;
+    background: var(--accent);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  h4 {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 10px;
+    margin-top: 24px;
+  }
+
+  p {
+    margin-bottom: 16px;
+    color: #374151;
+  }
+
+  /* CODE BLOCKS */
+  pre {
+    background: var(--ink);
+    color: #e2e8f0;
+    border-radius: 8px;
+    padding: 20px 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+    overflow-x: auto;
+    margin: 16px 0 24px;
+  }
+
+  code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: #f1f0ed;
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: var(--accent);
+  }
+
+  pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+
+  .comment { color: #6b7280; }
+  .keyword { color: #93c5fd; }
+  .string  { color: #86efac; }
+  .number  { color: #fca5a5; }
+  .func    { color: #fde68a; }
+
+  /* TABLES */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 24px;
+    font-size: 14px;
+  }
+
+  th {
+    background: var(--ink);
+    color: white;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: #374151;
+    vertical-align: top;
+  }
+
+  tr:nth-child(even) td { background: #f9f8f6; }
+
+  /* CALLOUT BOXES */
+  .callout {
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    border-left: 4px solid;
+    font-size: 14px;
+  }
+
+  .callout-info  { background: var(--blue-bg);   border-color: var(--accent2); color: #1e3a5f; }
+  .callout-warn  { background: var(--yellow-bg);  border-color: #ca8a04;        color: #713f12; }
+  .callout-good  { background: var(--green-bg);   border-color: #16a34a;        color: #14532d; }
+  .callout-red   { background: var(--red-bg);     border-color: var(--accent);  color: #7f1d1d; }
+  .callout-title { font-weight: 700; margin-bottom: 4px; font-size: 13px; letter-spacing: 0.05em; text-transform: uppercase; }
+
+  /* ARCHITECTURE DIAGRAM */
+  .arch-diagram {
+    background: var(--ink);
+    border-radius: 12px;
+    padding: 32px;
+    margin: 24px 0;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: #94a3b8;
+    line-height: 2;
+  }
+
+  .arch-box {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 12px;
+    margin: 2px;
+  }
+
+  .ab-blue   { background: rgba(37,99,235,0.25);  color: #93c5fd; border: 1px solid rgba(37,99,235,0.4); }
+  .ab-green  { background: rgba(22,163,74,0.25);  color: #86efac; border: 1px solid rgba(22,163,74,0.4); }
+  .ab-red    { background: rgba(200,75,49,0.25);  color: #fca5a5; border: 1px solid rgba(200,75,49,0.4); }
+  .ab-purple { background: rgba(124,58,237,0.25); color: #c4b5fd; border: 1px solid rgba(124,58,237,0.4); }
+  .ab-yellow { background: rgba(202,138,4,0.25);  color: #fde68a; border: 1px solid rgba(202,138,4,0.4); }
+
+  .arch-arrow { color: #475569; }
+
+  /* STEP LIST */
+  .steps { counter-reset: step; list-style: none; }
+  .steps li {
+    counter-increment: step;
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    align-items: flex-start;
+  }
+  .steps li::before {
+    content: counter(step);
+    min-width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .steps li p { margin: 0; }
+  .steps li strong { display: block; font-size: 15px; margin-bottom: 4px; }
+
+  /* LABEL PILLS */
+  .pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--mono);
+    margin: 2px;
+  }
+
+  .pill-good        { background: #dcfce7; color: #166534; }
+  .pill-avg         { background: #fef9c3; color: #713f12; }
+  .pill-hump        { background: #ffedd5; color: #9a3412; }
+  .pill-pothole     { background: #fee2e2; color: #7f1d1d; }
+  .pill-bad         { background: #ffe4e6; color: #881337; }
+  .pill-obstruction { background: #f3e8ff; color: #4c1d95; }
+
+  /* FILE TREE */
+  .filetree {
+    background: #1e1e2e;
+    border-radius: 8px;
+    padding: 20px 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 2;
+    color: #cdd6f4;
+    margin: 16px 0 24px;
+  }
+  .ft-dir   { color: #89b4fa; font-weight: 500; }
+  .ft-file  { color: #a6e3a1; }
+  .ft-note  { color: #6c7086; }
+
+  /* TWO COLUMN */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 16px 0; }
+  @media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  .card h4 { margin-top: 0; }
+
+  /* DIVIDER */
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0;
+  }
+
+  /* TOC */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 32px;
+    margin: 40px 0;
+  }
+
+  .toc h3 { margin-top: 0; }
+  .toc h3::before { display: none; }
+
+  .toc-list { list-style: none; }
+  .toc-list li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px dotted var(--border);
+    font-size: 14px;
+  }
+  .toc-list li:last-child { border: none; }
+  .toc-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    min-width: 24px;
+  }
+  .toc-title { flex: 1; font-weight: 500; }
+
+  /* THRESHOLD TABLE */
+  .thresh-row td:first-child { font-family: var(--mono); font-size: 12px; }
+
+  /* FORMULA BOX */
+  .formula {
+    background: var(--ink2);
+    color: #e2e8f0;
+    border-radius: 8px;
+    padding: 16px 24px;
+    font-family: var(--mono);
+    font-size: 13px;
+    margin: 16px 0;
+    line-height: 2;
+  }
+
+  /* PRINT */
+  @media print {
+    .cover { min-height: auto; padding: 60px; }
+    .page  { padding: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!--  COVER                                                        -->
+<!-- ============================================================ -->
+<div class="cover">
+  <div class="cover-tag">Technical Architecture Document · v1.0</div>
+  <div class="cover-rule"></div>
+  <h1>Road<span>Sense</span></h1>
+  <p class="cover-subtitle">Adaptive Road Condition Detection System<br>Full Stack Architecture & Deployment Guide</p>
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <div class="label">Stack</div>
+      <div class="value">HTML · Node.js · SQLite</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">Type</div>
+      <div class="value">PWA + REST API</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">Deploy</div>
+      <div class="value">Netlify + Railway</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!--  DOCUMENT BODY                                                -->
+<!-- ============================================================ -->
+<div class="page">
+
+  <!-- TABLE OF CONTENTS -->
+  <div class="toc">
+    <h3 style="font-family: var(--serif); font-size:24px; margin-bottom:20px;">Table of Contents</h3>
+    <ul class="toc-list">
+      <li><span class="toc-num">01</span><span class="toc-title">System Overview & Vision</span></li>
+      <li><span class="toc-num">02</span><span class="toc-title">Full Architecture Diagram</span></li>
+      <li><span class="toc-num">03</span><span class="toc-title">Frontend — Adaptive Web App</span></li>
+      <li><span class="toc-num">04</span><span class="toc-title">The Adaptive Calibration Engine</span></li>
+      <li><span class="toc-num">05</span><span class="toc-title">Live Map & GPS Integration</span></li>
+      <li><span class="toc-num">06</span><span class="toc-title">Obstruction Reporting System</span></li>
+      <li><span class="toc-num">07</span><span class="toc-title">Backend — Node.js + Express API</span></li>
+      <li><span class="toc-num">08</span><span class="toc-title">Database Schema</span></li>
+      <li><span class="toc-num">09</span><span class="toc-title">Admin Dashboard</span></li>
+      <li><span class="toc-num">10</span><span class="toc-title">Data Flow & CSV Format</span></li>
+      <li><span class="toc-num">11</span><span class="toc-title">Deployment — Step by Step</span></li>
+      <li><span class="toc-num">12</span><span class="toc-title">Future ML Pipeline</span></li>
+    </ul>
+  </div>
+
+  <!-- =========================================================== -->
+  <!--  CH 01 — OVERVIEW                                            -->
+  <!-- =========================================================== -->
+  <div class="chapter">
+    <div class="chapter-num">Chapter 01</div>
+    <h2>System Overview & Vision</h2>
+  </div>
+
+  <div class="section">
+    <p>RoadSense is a mobile-first web application that uses a smartphone's built-in sensors — accelerometer, gyroscope, magnetometer, and GPS — to detect and classify road surface conditions in real time. It adapts to each individual rider's behavior, vehicle type, and riding style over time, producing increasingly accurate road condition labels without manual intervention.</p>
+
+    <p>The system consists of three tightly integrated components working together:</p>
+
+    <div class="two-col">
+      <div class="card">
+        <h4>Frontend Web App</h4>
+        <p style="font-size:14px; color: #374151;">A single HTML file. No build step, no install. Runs fully in the phone browser. Collects sensor data, runs the adaptive engine locally, shows a live GPS map, and lets riders report obstructions.</p>
+      </div>
+      <div class="card">
+        <h4>Backend API + Database</h4>
+        <p style="font-size:14px; color: #374151;">A Node.js + Express server that receives uploaded ride data, stores it in SQLite with metadata, and saves labeled CSV files to disk for future ML training.</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:0">
+      <h4>Admin Dashboard</h4>
+      <p style="font-size:14px; color: #374151; margin:0;">A password-protected web dashboard that shows all collected rides, label distribution charts, per-ride download links, and a live Leaflet map of all road condition data overlaid across all riders — a growing ground truth city road quality map.</p>
+    </div>
+
+    <h3>Why This Approach</h3>
+    <p>Traditional road condition survey systems require specialized hardware, manual inspection teams, or government infrastructure. RoadSense turns every smartphone into a sensor node. The key insight is that raw sensor thresholds differ massively between a bicycle, a motorcycle, and a car — and between a cracked old phone and a new flagship. Hardcoded thresholds fail. The adaptive calibration engine solves this by learning the rider's specific baseline over rides, making the system universally accurate regardless of device or vehicle.</p>
+
+    <div class="callout callout-info">
+      <div class="callout-title">📌 Core Principle</div>
+      The system does not use a pre-trained ML model. The adaptive engine is a statistical calibration system — it learns thresholds per rider using rolling statistics (mean, standard deviation) on their own data. The labeled CSVs it produces are the training data for a future ML model.
+    </div>
+  </div>
+
+  <!-- =========================================================== -->
+  <!--  CH 02 — ARCHITECTURE DIAGRAM                                -->
+  <!-- =========================================================== -->
+  <div class="chapter">
+    <div class="chapter-num">Chapter 02</div>
+    <h2>Full Architecture Diagram</h2>
+  </div>
+
+  <div class="arch-diagram">
+    <div style="color:#475569; margin-bottom:16px; font-size:11px; letter-spacing:0.15em;">── RIDER'S PHONE ──────────────────────────────────────────</div>
+
+    <div style="margin-left:16px; line-height:2.4;">
+      <span class="arch-box ab-blue">Accelerometer</span>
+      <span class="arch-box ab-blue">Gyroscope</span>
+      <span class="arch-box ab-blue">Magnetometer</span>
+      <span class="arch-box ab-blue">GPS</span>
+      <br>
+      <span class="arch-arrow" style="margin-left:32px;">↓ raw samples every ~10ms</span>
+      <br>
+      <span class="arch-box ab-yellow" style="margin-left:16px;">Adaptive Calibration Engine</span>
+      <span class="arch-arrow"> → computes magnitude + jerk + gyro norm</span>
+      <br>
+      <span class="arch-arrow" style="margin-left:32px;">↓ per 0.3s window label</span>
+      <br>
+      <span class="arch-box ab-green">good</span>
+      <span class="arch-box ab-green">avg</span>
+      <span class="arch-box ab-green">hump</span>
+      <span class="arch-box ab-red">pothole</span>
+      <span class="arch-box ab-red">bad</span>
+      <span class="arch-box ab-purple">obstruction*</span>
+      <span style="color:#6c7086; font-size:11px;"> *rider-triggered</span>
+      <br><br>
+      <span class="arch-arrow" style="margin-left:32px;">↓ painted onto</span>
+      <br>
+      <span class="arch-box ab-blue" style="margin-left:16px;">Live Leaflet Map</span>
+      <span class="arch-arrow"> ← colored polyline + event markers</span>
+      <br><br>
+      <span class="arch-arrow" style="margin-left:32px;">↓ after ride ends</span>
+      <br>
+      <span class="arch-box ab-yellow" style="margin-left:16px;">Post-Ride Review Screen</span>
+      <span class="arch-arrow"> ← rider corrects wrong labels</span>
+      <br>
+      <span class="arch-arrow" style="margin-left:32px;">↓ corrections nudge thresholds in localStorage</span>
+      <br>
+      <span class="arch-box ab-green" style="margin-left:16px;">Rider Profile (localStorage)</span>
+      <span class="arch-arrow"> ← thresholds, baseline, ride count</span>
+    </div>
+
+    <br>
+    <div style="color:#475569; margin-bottom:16px; font-size:11px; letter-spacing:0.15em;">── DATA UPLOAD ────────────────────────────────────────────</div>
+
+    <div style="margin-left:16px; line-height:2.4;">
+      <span class="arch-box ab-yellow">Labeled CSV</span>
+      <span class="arch-arrow"> → POST /api/upload →</span>
+      <span class="arch-box ab-red">Express Server (Railway)</span>
+      <br>
+      <span class="arch-arrow" style="margin-left:200px;">↓</span>
+      <br>
+      <span class="arch-box ab-red" style="margin-left:168px;">SQLite DB</span>
+      <span class="arch-arrow"> + </span>
+      <span class="arch-box ab-red">CSV saved to /uploads/</span>
+      <br>
+      <span class="arch-arrow" style="margin-left:200px;">↓</span>
+      <br>
+      <span class="arch-box ab-purple" style="margin-left:168px;">Admin Dashboard</span>
+      <span class="arch-arrow"> ← GET /api/rides</span>
+    </div>
+  </div>
+
+  <!-- =========================================================== -->
+  <!--  CH 03 — FRONTEND                                            -->
+  <!-- =========================================================== -->
+  <div class="chapter">
+    <div class="chapter-num">Chapter 03</div>
+    <h2>Frontend — Adaptive Web App</h2>
+  </div>
+
+  <div class="section">
+    <p>The frontend is a single <code>.html</code> file with no dependencies except Leaflet.js (loaded from CDN). It works fully offline once opened — the only network call is the optional upload to your server at the end of a ride.</p>
+
+    <h3>Four Screens</h3>
+
+    <h4>Screen 1 — Home / Profile</h4>
+    <p>Displays the rider's profile loaded from <code>localStorage</code>: calibration confidence score (0–100%), number of rides completed, number of corrections made, and current threshold values. A "Start Ride" button begins data collection.</p>
+
+    <h4>Screen 2 — Live Ride</h4>
+    <p>Split into two panels. The top panel shows live sensor values (ax, ay, az, gx, gy, gz, orientation α/β/γ), a scrolling real-time magnitude waveform for the last 5 seconds, and a large color-coded road condition badge that updates every 0.3 seconds showing the current window's label.</p>
+    <p>The bottom panel is a Leaflet map centered on the rider's GPS position. As the ride progresses, a colored polyline is drawn segment by segment reflecting the road condition at each GPS coordinate. Event markers (emoji icons) are dropped at notable events.</p>
+    <p>A large "⊘ OBSTRUCTION" press-and-hold button sits prominently at the bottom. Holding it marks the duration, releasing triggers a sub-type selector sheet.</p>
+
+    <h4>Screen 3 — Post-Ride Review</h4>
+    <p>Shows the complete ride on the Leaflet map with the full colored route and all markers. Below the map is a horizontal scrollable timeline of all 0.3s windows rendered as colored chips. Tapping any chip opens a popup showing the sensor values for that window and the current label, with buttons to change it. Every correction feeds back into the adaptive engine.</p>
+
+    <h4>Screen 4 — Upload & Export</h4>
+    <p>Automatically POSTs the ride data to the server. Shows upload progress. Also provides a "Download CSV" button for a local copy. Displays a summary: sample count, window count, label distribution breakdown.</p>
+
+    <h3>localStorage Structure</h3>
+    <pre><code><span class="comment">// Rider profile — persists forever, evolves each ride</span>
+{
+  <span class="string">"riderId"</span>: <span class="string">"uuid-generated-once"</span>,
+  <span class="string">"rideCount"</span>: <span class="number">12</span>,
+  <span class="string">"correctionCount"</span>: <span class="number">34</span>,
+  <span class="string">"baseline"</span>: {
+    <span class="string">"mean"</span>: <span class="number">9.87</span>,       <span class="comment">// smooth road accel magnitude mean</span>
+    <span class="string">"std"</span>: <span class="number">1.23</span>,        <span class="comment">// smooth road std deviation</span>
+    <span class="string">"gyroMean"</span>: <span class="number">4.5</span>,    <span class="comment">// smooth road gyro norm mean</span>
+    <span class="string">"gyroStd"</span>: <span class="number">1.1</span>,     <span class="comment">// smooth road gyro norm std</span>
+    <span class="string">"sampleCount"</span>: <span class="number">8420</span>  <span class="comment">// total samples in baseline</span>
+  },
+  <span class="string">"thresholds"</span>: {
+    <span class="string">"avgMultiplier"</span>: <span class="number">1.0</span>,
+    <span class="string">"humpMultiplier"</span>: <span class="number">1.8</span>,
+    <span class="string">"potholeMultiplier"</span>: <span class="number">1.8</span>,
+    <span class="string">"badMultiplier"</span>: <span class="number">2.5</span>,
+    <span class="string">"jerkThreshold"</span>: <span class="number">15.0</span>,
+    <span class="string">"gyroMultiplier"</span>: <span class="number">3.0</span>
+  },
+  <span class="string">"calibrationConfidence"</span>: <span class="number">74</span>  <span class="comment">// % (grows with ride + correction count)</span>
+}</code></pre>
+  </div>
+
+  <!-- =========================================================== -->
+  <!--  CH 04 — ADAPTIVE ENGINE                                     -->
+  <!-- =========================================================== -->
+  <div class="chapter">
+    <div class="chapter-num">Chapter 04</div>
+    <h2>The Adaptive Calibration Engine</h2>
+  </div>
+
+  <div class="section">
+    <p>This is the core intelligence of RoadSense. Instead of hardcoded magnitude thresholds, the engine maintains a statistical model of each rider's baseline (smooth road) sensor behavior, and derives all thresholds as multiples of that baseline's standard deviation.</p>
+
+    <h3>Three Features Per Window</h3>
+
+    <table>
+      <tr><th>Feature</th><th>Formula</th><th>What it detects</th></tr>
+      <tr><td><strong>Accel Magnitude</strong></td><td><code>√(ax² + ay² + az²)</code></td><td>Overall intensity of road disturbance</td></tr>
+      <tr><td><strong>Jerk</strong></td><td><code>|Δmagnitude / Δtime|</code></td><td>Sharpness of event — distinguishes sharp potholes from gradual humps</td></tr>
+      <tr><td><strong>Gyro Norm</strong></td><td><code>√(gx² + gy² + gz²)</code></td><td>Rotational disturbance — obstructions, severe sway, bad road</td></tr>
+    </table>
+
+    <h3>Speed Normalization</h3>
+    <p>A vehicle traveling at 60 km/h over the same pothole produces a higher magnitude signal than one at 20 km/h. The engine compensates using GPS speed:</p>
+
+    <div class="formula">
+adjusted_magnitude = raw_magnitude / speed_factor
+speed_factor = 1.0 + (gps_speed_kmh / 60.0)
+
+<span style="color:#6b7280;">// Example: 80 km/h → speed_factor = 2.33
+// same pothole at 80 km/h reads as if at 34 km/h equivalent</span>
+    </div>
+
+    <h3>Label Decision Logic</h3>
+    <p>After speed normalization, the adjusted magnitude is compared against dynamic thresholds derived from the rider's baseline:</p>
+
+    <div class="formula">
+μ = baseline.mean      <span style="color:#6b7280;">// rider's smooth-road mean</span>
+σ = baseline.std       <span style="color:#6b7280;">// rider's smooth-road std deviation</span>
+T = thresholds         <span style="color:#6b7280;">// learned multipliers</span>
+
+IF   adj_mag &lt; μ + T.avg × σ                        → <span style="color:#86efac;">good</span>
+ELIF adj_mag &lt; μ + T.hump × σ AND jerk &lt; T.jerk      → <span style="color:#fde68a;">avg or hump</span>
+ELIF adj_mag &lt; μ + T.hump × σ AND jerk ≥ T.jerk      → <span style="color:#fca5a5;">pothole</span>
+ELIF adj_mag &lt; μ + T.bad  × σ                        → <span style="color:#fca5a5;">bad</span>
+ELIF gyro_norm &gt; μ_gyro + T.gyro × σ_gyro           → <span style="color:#c4b5fd;">obstruction*</span>
+ELSE                                                  → <span style="color:#fca5a5;">bad</span>
+
+<span style="color:#6b7280;">* sensor-detected only; rider press-and-hold overrides with sub-type</span>
+    </div>
+
+    <h3>Baseline Learning (Welford's Online Algorithm)</h3>
+    <p>The baseline updates incrementally every window — no need to store all past samples in memory. Windows labeled <code>good</code> contribute to the baseline. This is key: as the rider corrects labels, more accurate good-road windows enter the baseline.</p>
+
+    <pre><code><span class="comment">// Welford's online mean + variance update</span>
+<span class="keyword">function</span> <span class="func">updateBaseline</span>(profile, newMagnitude) {
+  profile.baseline.sampleCount++;
+  <span class="keyword">const</span> delta = newMagnitude - profile.baseline.mean;
+  profile.baseline.mean += delta / profile.baseline.sampleCount;
+  <span class="keyword">const</span> delta2 = newMagnitude - profile.baseline.mean;
+  profile.baseline.M2 += delta * delta2;  <span class="comment">// running sum of squares</span>
+  profile.baseline.std = Math.sqrt(
+    profile.baseline.M2 / profile.baseline.sampleCount
+  );
+}</code></pre>
+
+    <h3>Correction Learning (Threshold Nudging)</h3>
+    <p>When a rider corrects a label, the relevant threshold multiplier is nudged by a small learning rate. This is a simple but effective online learning mechanism:</p>
+
+    <pre><code><span class="keyword">const</span> LEARNING_RATE = <span class="number">0.05</span>;  <span class="comment">// 5% nudge per correction</span>
+
+<span class="comment">// If rider corrects "hump" → "good": hump threshold was too low, raise it</span>
+<span class="keyword">if</span> (predicted === <span class="string">'hump'</span> && corrected === <span class="string">'good'</span>) {
+  profile.thresholds.humpMultiplier *= (<span class="number">1</span> + LEARNING_RATE);
+}
+
+<span class="comment">// If rider corrects "good" → "pothole": threshold was too high, lower it</span>
+<span class="keyword">if</span> (predicted === <span class="string">'good'</span> && corrected === <span class="string">'pothole'</span>) {
+  profile.thresholds.potholeMultiplier *= (<span class="number">1</span> - LEARNING_RATE);
+}</code></pre>
+
+    <h3>Calibration Confidence Score</h3>
+    <p>A 0–100% score shown on the home screen. Gives users feedback on how well-calibrated their profile is:</p>
+
+    <div class="formula">
+confidence = min(100, (rideCount × 8) + (correctionCount × 1.5))
+
+<span style="color:#6b7280;">// 0 rides  = 0%   (default thresholds, unreliable)
+// 5 rides  = 40%  (getting personalized)
+// 10 rides = 80%  (well calibrated)
+// 13 rides = 100% (fully calibrated)</span>
+    </div>
+
+    <div class="callout callout-good">
+      <div class="callout-title">✓ Key Insight</div>
+      The engine never needs to store past sensor data. All learning happens through incrementally updated statistics. The entire rider profile is under 1KB in localStorage.
+    </div>
+  </div>
+
+  <!-- =========================================================== -->
+  <!--  CH 05 — MAP                                                 -->
+  <!-- =========================================================== -->
+  <div class="chapter">
+    <div class="chapter-num">Chapter 05</div>
+    <h2>Live Map & GPS Integration</h2>
+  </div>
+
+  <div class="section">
+    <p>The map uses <strong>Leaflet.js + OpenStreetMap tiles</strong> — completely free, no API key required. GPS data is collected via the browser's <code>Geolocation.watchPosition()</code> API with high accuracy mode enabled.</p>
+
+    <h3>How the Colored Polyline Works</h3>
+    <p>Rather than one continuous polyline, the map draws a new line segment for each 0.3s window. Each segment connects the GPS coordinates of consecutive windows and is colored based on that window's label:</p>
+
+    <table>
+      <tr><th>Label</th><th>Color</th><th>Map marker</th></tr>
+      <tr><td><span class="pill pill-good">good</span></td><td>#39ff6e — bright green</td><td>None (clean road)</td></tr>
+      <tr><td><span class="pill pill-avg">avg</span></td><td>#ffd93d — yellow</td><td>None</td></tr>
+      <tr><td><span class="pill pill-hump">hump</span></td><td>#ff9f43 — orange</td><td>∧ marker</td></tr>
+      <tr><td><span class="pill pill-pothole">pothole</span></td><td>#ff6b81 — pink-red</td><td>🕳 marker</td></tr>
+      <tr><td><span class="pill pill-bad">bad</span></td><td>#ff4757 — red</td><td>✕ marker</td></tr>
+      <tr><td><span class="pill pill-obstruction">obstruction</span></td><td>#a29bfe — purple</td><td>⊘ marker with sub-type popup</td></tr>
+    </table>
+
+    <h3>GPS Stamping on Sensor Samples</h3>
+    <p>GPS updates arrive at ~1Hz, far slower than the IMU (~100Hz). The last known GPS coordinate is carried forward and stamped on every sensor sample until a new GPS fix arrives. This means every row in the CSV has a lat/lng, though many consecutive rows will share the same coordinate.</p>
+
+    <div class="callout callout-warn">
+      <div class="callout-title">⚠ GPS Accuracy Note</div>
+      GPS accuracy on mobile is typically 3–10 meters outdoors. In tunnels, dense urban canyons, or indoors, GPS may be unavailable. The app handles this gracefully — lat/lng columns are left empty when no fix is available, and the map simply stops drawing the polyline until GPS is restored.
+    </div>
+  </div>
+
+  <!-- =========================================================== -->
+  <!--  CH 06 — OBSTRUCTION                                         -->
+  <!-- =========================================================== -->
+  <div class="chapter">
+    <div class="chapter-num">Chapter 06</div>
+    <h2>Obstruction Reporting System</h2>
+  </div>
+
+  <div class="section">
+    <p>Obstructions are semantic events — traffic jams, roadblocks, diversions, accidents — that sensors cannot detect. The rider reports them manually via a dedicated press-and-hold button.</p>
+
+    <h3>Interaction Flow</h3>
+    <ol class="steps">
+      <li><p><strong>Press and hold the ⊘ OBSTRUCTION button</strong><br>The button pulses purple. A timer counts the duration of the hold. All sensor samples during the hold are pre-labeled <code>obstruction</code>.</p></li>
+      <li><p><strong>Release the button</strong><br>A bottom sheet slides up from the bottom of the screen with four sub-type options.</p></li>
+      <li><p><strong>Tap a sub-type</strong><br>Options: 🚗 Traffic Jam · 🚧 Roadblock · 🔀 Diversion · 🚨 Accident. The sub-type is recorded in the <code>sublabel</code> column of the CSV.</p></li>
+      <li><p><strong>Auto-dismiss fallback</strong><br>If the rider ignores the sheet for 5 seconds (they may be riding), it auto-dismisses and defaults to "Traffic Jam". The ride continues uninterrupted.</p></li>
+      <li><p><strong>Map marker dropped</strong><br>A purple ⊘ marker is placed at the GPS location where the obstruction started. Tapping the marker shows: sub-type, duration, and timestamp.</p></li>
+    </ol>
+
+    <h3>CSV Output for Obstructions</h3>
+    <p>Obstruction samples appear as regular rows but with <code>label = obstruction</code> and a sub-type in the <code>sublabel</code> column. Non-obstruction samples have <code>sublabel = none</code>.</p>
+
+    <pre><code><span class="comment">// Example CSV rows during an obstruction event</span>
+1741300200000,42,9.12,0.43,1.21,2.1,0.8,3.2,180.1,12.3,-5.2,13.0827,80.2707,<span class="string">obstruction</span>,<span class="string">traffic_jam</span>
+1741300200300,43,9.08,0.41,1.19,2.0,0.9,3.1,180.2,12.1,-5.3,13.0827,80.2707,<span class="string">obstruction</span>,<span class="string">traffic_jam</span>
+1741300200600,44,9.15,0.44,1.22,2.2,0.7,3.3,180.0,12.4,-5.1,13.0828,80.2708,<span class="string">good</span>,<span class="string">none</span></code></pre>
+  </div>
+
+  <!-- =========================================================== -->
+  <!--  CH 07 — BACKEND                                             -->
+  <!-- =========================================================== -->
+  <div class="chapter">
+    <div class="chapter-num">Chapter 07</div>
+    <h2>Backend — Node.js + Express API</h2>
+  </div>
+
+  <div class="section">
+    <h3>Project Structure</h3>
+    <div class="filetree">
+<span class="ft-dir">roadsense-server/</span>
+├── <span class="ft-file">server.js</span>          <span class="ft-note">← main Express app, routes</span>
+├── <span class="ft-file">database.js</span>        <span class="ft-note">← SQLite setup, all query functions</span>
+├── <span class="ft-file">middleware.js</span>       <span class="ft-note">← API key auth, CORS, rate limiting</span>
+├── <span class="ft-file">dashboard.html</span>     <span class="ft-note">← served at /dashboard (static)</span>
+├── <span class="ft-file">package.json</span>
+├── <span class="ft-dir">uploads/</span>            <span class="ft-note">← CSV files saved here (auto-created)</span>
+│   └── <span class="ft-file">ride_abc123_2026-03-07.csv</span>
+└── <span class="ft-file">rides.db</span>            <span class="ft-note">← SQLite file (auto-created on first run)</span>
+    </div>
+
+    <h3>API Endpoints</h3>
+
+    <table>
+      <tr><th>Method</th><th>Path</th><th>Auth</th><th>Description</th></tr>
+      <tr><td><code>POST</code></td><td><code>/api/upload</code></td><td>None (public)</td><td>Receives ride CSV + metadata. Saves file, inserts DB record. Returns <code>{success, rideId}</code>.</td></tr>
+      <tr><td><code>GET</code></td><td><code>/api/rides</code></td><td>API Key header</td><td>Returns all ride records as JSON for the dashboard.</td></tr>
+      <tr><td><code>GET</code></td><td><code>/api/rides/:id/csv</code></td><td>API Key header</td><td>Streams the CSV file for a specific ride.</td></tr>
+      <tr><td><code>GET</code></td><td><code>/api/stats</code></td><td>API Key header</td><td>Returns aggregate stats: total rides, samples, unique riders, label distribution.</td></tr>
+      <tr><td><code>GET</code></td><td><code>/dashboard</code></td><td>Password (basic)</td><td>Serves the admin dashboard HTML.</td></tr>
+    </table>
+
+    <h3>Upload Payload (POST /api/upload)</h3>
+    <pre><code><span class="comment">// Sent as multipart/form-data</span>
+{
+  <span class="string">"riderId"</span>:      <span class="string">"uuid-abc-123"</span>,        <span class="comment">// anonymous, from localStorage</span>
+  <span class="string">"timestamp"</span>:    <span class="string">"2026-03-07T08:30:00Z"</span>, <span class="comment">// ride start time</span>
+  <span class="string">"deviceModel"</span>:  <span class="string">"iPhone 14"</span>,
+  <span class="string">"os"</span>:           <span class="string">"iOS 17.2"</span>,
+  <span class="string">"sampleCount"</span>:  <span class="number">4820</span>,
+  <span class="string">"windowCount"</span>:  <span class="number">160</span>,
+  <span class="string">"rideDuration"</span>: <span class="number">48200</span>,               <span class="comment">// ms</span>
+  <span class="string">"labelCounts"</span>:  <span class="string">'{"good":82,"avg":31,"hump":12,"pothole":8,"bad":4,"obstruction":3}'</span>,
+  <span class="string">"csvFile"</span>:      <span class="string">[binary CSV file]</span>     <span class="comment">// multipart file upload</span>
+}</code></pre>
+
+    <h3>Key Dependencies</h3>
+    <pre><code><span class="comment">// package.json</span>
+{
+  <span class="string">"dependencies"</span>: {
+    <span class="string">"express"</span>:    <span class="string">"^4.18.2"</span>,   <span class="comment">// web framework</span>
+    <span class="string">"better-sqlite3"</span>: <span class="string">"^9.4.3"</span>, <span class="comment">// fast sync SQLite</span>
+    <span class="string">"multer"</span>:     <span class="string">"^1.4.5"</span>,   <span class="comment">// multipart file upload handling</span>
+    <span class="string">"cors"</span>:       <span class="string">"^2.8.5"</span>,   <span class="comment">// allow requests from Netlify frontend</span>
+    <span class="string">"helmet"</span>:     <span class="string">"^7.1.0"</span>,   <span class="comment">// security headers</span>
+    <span class="string">"dotenv"</span>:     <span class="string">"^16.3.1"</span>   <span class="comment">// API key from environment variable</span>
+  }
+}</code></pre>
+  </div>
+
+  <!-- =========================================================== -->
+  <!--  CH 08 — DATABASE                                            -->
+  <!-- =========================================================== -->
+  <div class="chapter">
+    <div class="chapter-num">Chapter 08</div>
+    <h2>Database Schema</h2>
+  </div>
+
+  <div class="section">
+    <p>SQLite is used for its simplicity — zero configuration, single file, no separate database server to manage. For a data collection project at this scale (thousands of rides), SQLite is more than sufficient.</p>
+
+    <pre><code><span class="comment">-- rides table: one row per completed ride</span>
+<span class="keyword">CREATE TABLE</span> rides (
+  id            INTEGER  PRIMARY KEY AUTOINCREMENT,
+  rider_id      TEXT     NOT NULL,        <span class="comment">-- anonymous UUID from phone</span>
+  timestamp     TEXT     NOT NULL,        <span class="comment">-- ISO 8601 ride start time</span>
+  device_model  TEXT,                     <span class="comment">-- e.g. "Samsung Galaxy S23"</span>
+  os            TEXT,                     <span class="comment">-- e.g. "Android 14"</span>
+  sample_count  INTEGER  DEFAULT 0,
+  window_count  INTEGER  DEFAULT 0,
+  ride_duration INTEGER  DEFAULT 0,       <span class="comment">-- milliseconds</span>
+  label_counts  TEXT,                     <span class="comment">-- JSON string</span>
+  csv_filename  TEXT     NOT NULL,        <span class="comment">-- filename in /uploads/</span>
+  uploaded_at   TEXT     DEFAULT (datetime('now'))
+);
+
+<span class="comment">-- index for fast per-rider queries</span>
+<span class="keyword">CREATE INDEX</span> idx_rider_id ON rides(rider_id);
+<span class="keyword">CREATE INDEX</span> idx_uploaded ON rides(uploaded_at);</code></pre>
+
+    <h3>Example Row</h3>
+    <pre><code>{
+  id:            <span class="number">47</span>,
+  rider_id:      <span class="string">"f3a2c1d0-8b4e-4f2a-a1b3-c9d8e7f6a5b4"</span>,
+  timestamp:     <span class="string">"2026-03-07T08:30:00Z"</span>,
+  device_model:  <span class="string">"iPhone 14 Pro"</span>,
+  os:            <span class="string">"iOS 17.3"</span>,
+  sample_count:  <span class="number">4820</span>,
+  window_count:  <span class="number">160</span>,
+  ride_duration: <span class="number">48200</span>,
+  label_counts:  <span class="string">'{"good":82,"avg":31,"hump":12,"pothole":8,"bad":4,"obstruction":3}'</span>,
+  csv_filename:  <span class="string">"ride_f3a2c1d0_2026-03-07T08-30-00Z.csv"</span>,
+  uploaded_at:   <span class="string">"2026-03-07T08:52:41Z"</span>
+}</code></pre>
+  </div>
+
+  <!-- =========================================================== -->
+  <!--  CH 09 — DASHBOARD                                           -->
+  <!-- =========================================================== -->
+  <div class="chapter">
+    <div class="chapter-num">Chapter 09</div>
+    <h2>Admin Dashboard</h2>
+  </div>
+
+  <div class="section">
+    <p>Served at <code>/dashboard</code>, protected by HTTP Basic Auth with a password set in your server's environment variables. It is a single HTML page loaded with live data from your API.</p>
+
+    <h3>Dashboard Sections</h3>
+
+    <div class="two-col">
+      <div class="card">
+        <h4>Summary Stats</h4>
+        <p style="font-size:14px; color:#374151;">Total rides collected, total sensor samples, number of unique riders, total ride duration across all rides, and per-label counts as a bar chart.</p>
+      </div>
+      <div class="card">
+        <h4>Rides Table</h4>
+        <p style="font-size:14px; color:#374151;">Paginated table of all rides sorted by upload time. Columns: Rider ID (anonymized), device, OS, samples, duration, label breakdown, upload time. Download CSV button per row.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 16px;">
+      <h4>Global Road Condition Map</h4>
+      <p style="font-size:14px; color:#374151; margin:0;">A Leaflet map that loads GPS coordinates and labels from all uploaded CSVs and overlays them as colored markers on the map. Over time, this becomes a city-wide road quality heatmap built entirely from your users' rides — your ground truth dataset visualized geographically.</p>
+    </div>
+
+    <div class="callout callout-info" style="margin-top:24px;">
+      <div class="callout-title">📌 Privacy Note</div>
+      Rider IDs are anonymous UUIDs generated on the phone. No personal data (name, email, phone number) is ever collected or transmitted. The privacy notice is shown to users on their first ride with a consent checkbox before any upload occurs.
+    </div>
+  </div>
+
+  <!-- =========================================================== -->
+  <!--  CH 10 — DATA FLOW & CSV                                     -->
+  <!-- =========================================================== -->
+  <div class="chapter">
+    <div class="chapter-num">Chapter 10</div>
+    <h2>Data Flow & CSV Format</h2>
+  </div>
+
+  <div class="section">
+    <h3>CSV Column Specification</h3>
+
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>timestamp</code></td><td>Integer (ms)</td><td>Unix timestamp in milliseconds. From <code>event.timeStamp</code> or <code>Date.now()</code>.</td></tr>
+      <tr><td><code>window_id</code></td><td>Integer</td><td>0.3s window index. All samples in the same window share this ID.</td></tr>
+      <tr><td><code>ax</code></td><td>Float (m/s²)</td><td>Accelerometer X — includes gravity</td></tr>
+      <tr><td><code>ay</code></td><td>Float (m/s²)</td><td>Accelerometer Y — includes gravity</td></tr>
+      <tr><td><code>az</code></td><td>Float (m/s²)</td><td>Accelerometer Z — includes gravity</td></tr>
+      <tr><td><code>gx</code></td><td>Float (°/s)</td><td>Gyroscope rotation rate around X axis</td></tr>
+      <tr><td><code>gy</code></td><td>Float (°/s)</td><td>Gyroscope rotation rate around Y axis</td></tr>
+      <tr><td><code>gz</code></td><td>Float (°/s)</td><td>Gyroscope rotation rate around Z axis</td></tr>
+      <tr><td><code>mx</code></td><td>Float (°)</td><td>Device orientation alpha (compass heading)</td></tr>
+      <tr><td><code>my</code></td><td>Float (°)</td><td>Device orientation beta (front-back tilt)</td></tr>
+      <tr><td><code>mz</code></td><td>Float (°)</td><td>Device orientation gamma (left-right tilt)</td></tr>
+      <tr><td><code>lat</code></td><td>Float (°)</td><td>GPS latitude. Empty if no fix.</td></tr>
+      <tr><td><code>lng</code></td><td>Float (°)</td><td>GPS longitude. Empty if no fix.</td></tr>
+      <tr><td><code>label</code></td><td>String</td><td>Road condition: <code>good / avg / hump / pothole / bad / obstruction / none</code></td></tr>
+      <tr><td><code>sublabel</code></td><td>String</td><td>Obstruction sub-type: <code>traffic_jam / roadblock / diversion / accident / none</code></td></tr>
+    </table>
+
+    <h3>Sample Rate</h3>
+    <p>The <code>devicemotion</code> event fires at approximately 60–100Hz depending on the device and browser. At 100Hz, a 10-minute ride produces roughly <strong>60,000 rows</strong> in the CSV. File size is approximately 8–12 MB per 10 minutes uncompressed.</p>
+  </div>
+
+  <!-- =========================================================== -->
+  <!--  CH 11 — DEPLOYMENT                                          -->
+  <!-- =========================================================== -->
+  <div class="chapter">
+    <div class="chapter-num">Chapter 11</div>
+    <h2>Deployment — Step by Step</h2>
+  </div>
+
+  <div class="section">
+    <div class="callout callout-info">
+      <div class="callout-title">📌 Two Services to Deploy</div>
+      Frontend → <strong>Netlify</strong> (free, static hosting, instant HTTPS)<br>
+      Backend  → <strong>Railway</strong> (free tier, Node.js, persistent disk for SQLite)
+    </div>
+
+    <h3>Part A — Deploy the Frontend (Netlify)</h3>
+    <ol class="steps">
+      <li>
+        <p><strong>Open Netlify Drop</strong><br>Go to <code>app.netlify.com/drop</code> in your browser.</p>
+      </li>
+      <li>
+        <p><strong>Drag and drop your HTML file</strong><br>Drop <code>road_data_collector.html</code> onto the page. Netlify instantly gives you a URL like <code>https://jolly-river-abc123.netlify.app</code>.</p>
+      </li>
+      <li>
+        <p><strong>Create a free Netlify account</strong><br>Claim the site to keep the URL permanently and enable redeployment. Go to <code>app.netlify.com</code> → Sign up → then "Claim site" on your deployed page.</p>
+      </li>
+      <li>
+        <p><strong>Set your server URL in the HTML file</strong><br>Before deploying, edit the one line in the frontend code: <code>const SERVER_URL = 'https://your-railway-app.railway.app'</code> — update this after your backend is deployed (see Part B). Then redeploy by dragging the updated file again.</p>
+      </li>
+    </ol>
+
+    <h3>Part B — Deploy the Backend (Railway)</h3>
+    <ol class="steps">
+      <li>
+        <p><strong>Create a GitHub repository</strong><br>Go to <code>github.com</code> → New repository → name it <code>roadsense-server</code>. Upload your server files: <code>server.js</code>, <code>database.js</code>, <code>middleware.js</code>, <code>dashboard.html</code>, <code>package.json</code>.</p>
+      </li>
+      <li>
+        <p><strong>Sign up for Railway</strong><br>Go to <code>railway.app</code> → Sign up with GitHub (free tier gives you $5/month credit — more than enough).</p>
+      </li>
+      <li>
+        <p><strong>Create a new project</strong><br>Click "New Project" → "Deploy from GitHub repo" → select <code>roadsense-server</code>. Railway auto-detects Node.js and runs <code>npm install && node server.js</code>.</p>
+      </li>
+      <li>
+        <p><strong>Set environment variables</strong><br>In Railway dashboard → your service → "Variables" tab. Add these:</p>
+        <pre><code>API_KEY=your-secret-key-here          <span class="comment"># for /api/rides dashboard access</span>
+DASHBOARD_PASSWORD=your-password       <span class="comment"># for /dashboard basic auth</span>
+PORT=3000                              <span class="comment"># Railway sets this automatically too</span></code></pre>
+      </li>
+      <li>
+        <p><strong>Add a volume for persistent storage</strong><br>In Railway → your service → "Volumes" → Add Volume. Mount path: <code>/app/uploads</code>. This ensures your CSV files and SQLite database survive server restarts.</p>
+      </li>
+      <li>
+        <p><strong>Get your Railway URL</strong><br>In Railway → your service → "Settings" → "Networking" → "Generate Domain". You'll get a URL like <code>roadsense-server.railway.app</code>. Copy this.</p>
+      </li>
+      <li>
+        <p><strong>Update the frontend with your server URL</strong><br>Edit <code>road_data_collector.html</code>: find <code>const SERVER_URL</code> and replace it with your Railway URL. Redeploy to Netlify.</p>
+      </li>
+    </ol>
+
+    <h3>Part C — Verify Everything Works</h3>
+    <ol class="steps">
+      <li>
+        <p><strong>Test the backend directly</strong><br>Visit <code>https://your-app.railway.app/api/stats</code> in your browser with the API key as a query param: <code>?key=your-secret-key</code>. You should get a JSON response with zeroed stats.</p>
+      </li>
+      <li>
+        <p><strong>Open the frontend on your phone</strong><br>Open your Netlify URL in Safari (iOS) or Chrome (Android). Grant all permissions. Do a short test ride. End the ride and go through the review screen. Tap "Upload & Download".</p>
+      </li>
+      <li>
+        <p><strong>Check the dashboard</strong><br>Visit <code>https://your-app.railway.app/dashboard</code>. Enter your dashboard password. You should see your test ride appear in the table.</p>
+      </li>
+    </ol>
+
+    <h3>CORS Configuration</h3>
+    <p>Your backend must allow requests from your Netlify domain. In <code>server.js</code>:</p>
+    <pre><code><span class="keyword">const</span> corsOptions = {
+  origin: [
+    <span class="string">'https://your-app.netlify.app'</span>,
+    <span class="string">'http://localhost:3000'</span>  <span class="comment">// for local testing</span>
+  ],
+  methods: [<span class="string">'GET'</span>, <span class="string">'POST'</span>]
+};
+app.use(cors(corsOptions));</code></pre>
+
+    <h3>Full Cost Breakdown</h3>
+    <table>
+      <tr><th>Service</th><th>Cost</th><th>Limits</th></tr>
+      <tr><td>Netlify (frontend)</td><td>Free forever</td><td>100GB bandwidth/month</td></tr>
+      <tr><td>Railway (backend)</td><td>Free ($5 credit/month)</td><td>512MB RAM, 1GB disk</td></tr>
+      <tr><td>OpenStreetMap tiles (map)</td><td>Free forever</td><td>Reasonable use policy</td></tr>
+      <tr><td><strong>Total</strong></td><td><strong>$0/month</strong></td><td>—</td></tr>
+    </table>
+  </div>
+
+  <!-- =========================================================== -->
+  <!--  CH 12 — FUTURE ML PIPELINE                                  -->
+  <!-- =========================================================== -->
+  <div class="chapter">
+    <div class="chapter-num">Chapter 12</div>
+    <h2>Future ML Pipeline</h2>
+  </div>
+
+  <div class="section">
+    <p>Once you have collected enough labeled rides from real users, the CSV files on your server become a training dataset for a proper machine learning model. Here is what that pipeline looks like:</p>
+
+    <div class="arch-diagram">
+      <div style="line-height:2.4; margin-left:16px;">
+        <span class="arch-box ab-blue">rides.db</span>
+        <span class="arch-arrow"> + </span>
+        <span class="arch-box ab-blue">/uploads/*.csv</span>
+        <span class="arch-arrow"> → </span>
+        <span class="arch-box ab-yellow">Data Pipeline Script</span>
+        <br>
+        <span class="arch-arrow" style="margin-left:240px;">↓</span>
+        <br>
+        <span class="arch-box ab-yellow" style="margin-left:200px;">Feature Extraction</span>
+        <span style="color:#6c7086; font-size:11px;"> (mean, std, max, jerk per window)</span>
+        <br>
+        <span class="arch-arrow" style="margin-left:240px;">↓</span>
+        <br>
+        <span class="arch-box ab-green" style="margin-left:200px;">Train Classifier</span>
+        <span style="color:#6c7086; font-size:11px;"> (Random Forest / LSTM)</span>
+        <br>
+        <span class="arch-arrow" style="margin-left:240px;">↓</span>
+        <br>
+        <span class="arch-box ab-red" style="margin-left:200px;">Trained Model</span>
+        <span class="arch-arrow"> → exported as ONNX / TFLite</span>
+        <br>
+        <span class="arch-arrow" style="margin-left:240px;">↓</span>
+        <br>
+        <span class="arch-box ab-purple" style="margin-left:200px;">Replace Adaptive Engine</span>
+        <span style="color:#6c7086; font-size:11px;"> in frontend with model inference</span>
+      </div>
+    </div>
+
+    <p>The adaptive calibration engine is your stepping stone. It makes data collection scalable and produces high-quality labels across diverse riders and vehicles. Once you have sufficient labeled data, a Random Forest or LSTM trained on per-window feature vectors will generalize far better than any threshold-based system.</p>
+
+    <div class="callout callout-good">
+      <div class="callout-title">✓ The Flywheel</div>
+      More riders → more labeled data → better ML model → replace adaptive engine with ML model → even better labels → even better training data. This is a self-improving data flywheel.
+    </div>
+
+    <hr>
+
+    <p style="text-align:center; color: var(--muted); font-size:13px; font-family: var(--mono); margin-top: 40px;">
+      RoadSense · Technical Architecture Document · v1.0 · 2026
+    </p>
+  </div>
+
+</div>
+</body>
+</html>
